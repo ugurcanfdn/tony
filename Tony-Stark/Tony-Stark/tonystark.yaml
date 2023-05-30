@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  tony stark
+Resources:
+  TonyStarkSecGrp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+
+  TonyStarkHost:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: ami-0715c1897453cabd1
+      InstanceType: t2.micro
+      KeyName: first-key-pair
+      SecurityGroupIds: 
+       - !Ref TonyStarkSecGrp
+      Tags: 
+        - Key: Name 
+          Value: TonyStark
+      UserData: 
+        Fn::Base64: !Sub |
+          #! /bin/bash
+             yum update -y 
+             yum install httpd -y 
+             FOLDER="https://raw.githubusercontent.com/ali-fidan/Tony-Stark/main"
+             cd /var/www/html
+             wget $FOLDER/index.html
+             wget $FOLDER/tony_stark.jpg
+             systemctl start httpd
+             systemctl enable httpd
+  
+Outputs:
+  WebSiteURL:
+    Value: !Sub
+      - http://${PublicAddress}
+      - PublicAddress: !GetAtt TonyStarkHost.PublicDnsName
